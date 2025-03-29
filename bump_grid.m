@@ -1,5 +1,5 @@
 %Grid with geometrical inflation layer for bump in channel problem
-clear all
+%clear all
 close all
 clc
 %tic
@@ -25,7 +25,7 @@ end
 l_x = 50; % length in X
 l_y = 5; % length in Y
 n_x = 354;  % number of grid points in X
-n_y =162;  % number of points in Y
+n_y =162;  % number of grid points in Y
 
 or_plate=[0 0];%origin of the plate X,Y
 len_plate=1.5;%len of the plate
@@ -34,10 +34,6 @@ p_farfield_r=or_plate(1)+len_plate+ 0.5*(l_x-len_plate);%position of the right f
 p_farfield_t=or_plate(2)+l_y;%position of the top farfield
 
 %Creating X steps with refinement at the leading and  trailing edges
-%vector with the X grid coordinates
-%x=zeros(1,n_x+1);
-%y=zeros(1,n_x+1);% for plotting pourposes
-
 
 %refinement in the leading and trailing edges with inflation layers x
 %direction
@@ -114,60 +110,63 @@ end
 x_grid_vector=[x_grid_lft x_plate_led(2:2*inf_layer_Nx+1) x_plate_int(2:gp_int_plate+1) x_plate_trl(2:2*inf_layer_Nx) x_grid_rgt];
 
 y=zeros(size(x_grid_vector));
-plot(x_grid_vector, y, 'o', 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+%plot(x_grid_vector, y, 'o', 'MarkerSize', 8, 'MarkerFaceColor', 'r');
 
 fprintf("Grid points in the plate")
 disp(2*inf_layer_Nx+gp_int_plate)
 
 %inflation layer in Y direction
-
-y = zeros(1, n_x+1);
-
-b_1 = int16(0.3/dx);
-b_2 = int16(1.2/dx);
-
-for i = b_1:b_2
-    y(i+1) = 0.05*(sin(pi*x(i+1)/0.9 - (pi/3.)))^4;%comment this line for a flat mesh
+for i = 1:length(x_grid_vector)
+    if x_grid_vector(i)>0.3
+        b_1=i;
+        break
+    end    
 end
 
-d_k = l_y/2;  % Distance from the viscous wall where the mesh will be denser
-p_k = 50;     % Percentage concentration for the zone with higher mesh density
-n_yp = n_y*(p_k/100); % Number of nodes in the high-density region
-n_yf = n_y - n_yp;    % Number of nodes in the free region
+for i = 1:length(x_grid_vector)
+    if x_grid_vector(i)>1.2
+        b_2=i-1;
+        break
+    end
+end
 
-dy_p = d_k / n_yp;     % y-step in the high-density part of the mesh
-dy_f = (l_y - d_k) / n_yf; % y-step in the remaining part of the mesh
+
+for i = b_1:b_2
+    y(i) = 0.05*(sin(pi*x_grid_vector(i)/0.9 - (pi/3.)))^4;%comment this line for a flat mesh
+end
+
+
 
 % Matrix that will store the X coordinates of the mesh
 X = zeros(n_y+1, n_x+1);
 % Storing X coordinates, constant step
 for i = 1:n_x+1
-    X(:, i) = x(i);
+    X(:, i) = x_grid_vector(i);
 end
+
 
 % Initial matrix that will store the Y coordinates of the mesh
 Y_t = zeros(n_y+1, n_x+1);
+%defining the Y coordinates for the bump
 for i = 1:n_x+1
     Y_t(1, i) = y(i);
+    Y_t(2,i)=Y_t(1, i)+y_h;
 end
 
-% Storing Y coordinates for the high-density nodes
-for i = 2:n_yp+1
+% Storing Y coordinates for the inflation boundary layer
+for i = 3:inf_layer_N+1
     for j = 1:n_x+1
-        Y_t(i, j) = Y_t(i-1, j) + dy_p;
+        Y_t(i, j) = Y_t(i-1, j) + y_h*inf_layer_G^(i-2);
     end
 end
 
-% Storing Y coordinates for the rest of the mesh, dynamic dy_f
+% Storing Y coordinates for the rest of the mesh
 dy_f_d = 0;          % dynamic y-step
 max_y = max(y);      % maximum value of Y
-dy_din = zeros(1, n_x+1); % vector for y-steps in the free part
-for i = n_yp+2:n_y+1
+for i = inf_layer_N+2:n_y+1
     for j = 1:n_x+1
-        % dy_f_d = (l_y + max_y - y(j)) / n_yf;
-        dy_f_d = (l_y - (y(j) + d_k)) / n_yf;
+        dy_f_d = (l_y - (y(j) + Y_t(inf_layer_N+1,1)))/(n_y-inf_layer_N);
         Y_t(i, j) = Y_t(i-1, j) + dy_f_d;
-        dy_din(j) = dy_f_d / dx;
     end
 end
 
@@ -184,28 +183,9 @@ end
 clear Y_t;
 
 z = zeros(n_y+1, n_x+1);
-
-figure(1)
-plot(x, y)
-
-% Flatten the matrices into vectors
-x_coords = X(:);
-y_coords = Y(:);
-%{
-% Create a scatter plot
-figure(2)
-scatter(x_coords, y_coords, 10, 'filled');  % The '10' specifies the marker size
-% Label the axes
-xlabel('X Coordinates');
-ylabel('Y Coordinates');
-% Title for the plot
-title('Scatter Plot of Unstructured Mesh Points');
-% Set axis equal for better representation of the points
-axis equal;
-% Optionally, add grid and adjust other plot settings
-grid on;
-%}
 figure(3)
 mesh(X, Y, z)
 title('Mesh')
 axis equal
+save('mesh_bumpchannel2.mat', 'X', 'Y');
+toc
