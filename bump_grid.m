@@ -182,10 +182,14 @@ end
 
 clear Y_t;
 
-z = zeros(n_y+1, n_x+1);
-figure(3)
-mesh(X, Y, z)
-title('Mesh')
-axis equal
-save('mesh_bumpchannel2.mat', 'X', 'Y');
+figure;
+% Plot vertical lines (constant j)
+plot(X, Y, 'Color', 'b', 'LineWidth', 0.5);
+hold on;
+% Plot horizontal lines (constant i)
+plot(X', Y', 'Color', 'b', 'LineWidth', 0.5);
+axis equal;
+xlabel('X');
+ylabel('Y');
+title('Structured Mesh');
 toc
