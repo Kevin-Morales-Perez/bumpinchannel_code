@@ -2,7 +2,7 @@
 %clear all
 close all
 clc
-%tic
+tic
 
 %boundary layer thickness estimation
 Re=3e6;%Reynolds Number
@@ -135,8 +135,6 @@ for i = b_1:b_2
     y(i) = 0.05*(sin(pi*x_grid_vector(i)/0.9 - (pi/3.)))^4;%comment this line for a flat mesh
 end
 
-
-
 % Matrix that will store the X coordinates of the mesh
 X = zeros(n_y+1, n_x+1);
 % Storing X coordinates, constant step
@@ -181,8 +179,56 @@ for i = 1:n_y+1
 end
 
 clear Y_t;
+% Adding ghost cells
+X_2= zeros(size(X)+2);
+Y_2= zeros(size(Y)+2);
 
-figure;
+for i= 2:n_y+2
+    for j=2:n_x+2
+        X_2(i,j)=X(i-1,j-1);
+        Y_2(i,j)=Y(i-1,j-1);
+    end 
+end
+X_2(:,1)=X_2(:,2)-(X_2(:,3)-X_2(:,2));
+X_2(1,:)=X_2(2,:);
+X_2(:,n_x+3)=X_2(:,n_x+2)+(X_2(:,n_x+2)-X_2(:,n_x+1));
+X_2(n_y+3,:)=X_2(n_y+2,:);
+
+Y_2(:,1)=Y_2(:,2);
+Y_2(:,n_x+3)=Y_2(:,n_x+2);
+Y_2(1,:)=Y_2(2,:)+(Y_2(2,:)-Y_2(3,:));
+
+for i=1:n_x+3
+    Y_2(n_y+3,i)=Y_2(n_y+3,i)-(Y_2(n_y+1,i)-Y_2(n_y+2,i));
+end
+
+Y_2(n_y+3,:)=Y_2(n_y+2,:)-(Y_2(n_y+1,:)-Y_2(n_y+2,:));
+
+clear X;
+clear Y;
+X=X_2;
+Y=Y_2;
+clear X_2;
+clear Y_2;
+
+% ghost cells Created
+
+save('mesh_bumpchannel.mat', 'X', 'Y');
+
+if size(X)==size(Y)
+    size_mesh=size(X);
+else
+    fprintf("Size of matrices X and Y is not the same \n")
+end
+
+fprintf("number of grid points in X = ")
+disp(size_mesh(2)-3)
+fprintf("number of grid points in Y = ")
+disp(size_mesh(1)-3)
+fprintf("number of cells =")
+disp((size_mesh(1)-3)*(size_mesh(2)-3))
+
+figure(1);
 % Plot vertical lines (constant j)
 plot(X, Y, 'Color', 'b', 'LineWidth', 0.5);
 hold on;
@@ -191,5 +237,6 @@ plot(X', Y', 'Color', 'b', 'LineWidth', 0.5);
 axis equal;
 xlabel('X');
 ylabel('Y');
-title('Structured Mesh');
+title('Structured Mesh for Bump in channel');
+
 toc
