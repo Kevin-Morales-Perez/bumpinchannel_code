@@ -1,6 +1,8 @@
-function [gradient_weights_op] =gradient_lsq_weights(adj_nodes,p_node)
+function [gradient_weights_op,norm] =gradient_lsq_weights(adj_nodes,p_node)
 %Function that returns least square gradient operator
-%Centroids from adyacent nodes N, faces enumerates as following [1,2,3,4]
+%also return the norms of the vectors that join the nodes 
+%Centroids from adyacent nodes N, faces enumerates as following
+%[1,2,3,4][X,Y]
 %example input adj_nodes=[-1,1;1,3;3,1;1,-2];
 %centroid of cell P
 %example input p_node = [1,1];

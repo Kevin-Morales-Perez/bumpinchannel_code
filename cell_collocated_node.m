@@ -1,4 +1,4 @@
-function [xc,yc,cell_face,trig_cell,center_face,cell_volume] = cell_collocated_node(x1,y1)
+function [cell_face,trig_cell,center_face,cell_volume,cell_cent] = cell_collocated_node(x1,y1)
 
 %this function calculates all geometric parameters of each cell
 %funtion to calculate the centroid of each cell
@@ -41,6 +41,8 @@ a_total=0.5*(dy1+dy2)*dx;%total area of the cell
 xc=x1(1)+(xt1*at1 + xt2*at2 + xt3*at3)/a_total;%x centroid of the cell
 yc=y_in+ (at1*yt1 + at2*yt2 + at3*yt3)/a_total;%y centroid of the cell
 
+cell_cent=[xc,yc];
+
 cell_face=[0 0 0 0];%vector which contain lenght of the faces
 cell_face(1)=dy1;
 cell_face(2)=sqrt((y1(3)-y1(2))^2 + dx^2);
@@ -60,7 +62,6 @@ cos1=cos(phi1);
 %cos1=1/(1 + tan1^2);
 sin1=sin(phi1);
 %sin1=tan1/(1 + tan1^2);
-
 
 trig_cell(1,1)=tan1;
 trig_cell(1,2)=cos1;
