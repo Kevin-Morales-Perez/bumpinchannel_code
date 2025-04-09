@@ -1,4 +1,4 @@
-function [u_star,d_Ij,dpy] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,trig_dif,delt_v,wl_op,p_vec,dist_nodes)
+function [u_star,d_Ij,dpy] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,dist_nodes)
 % x Momentum equation 
 % Finite volume x Momentum equation
 %Example of imput values
@@ -13,10 +13,10 @@ u_p=u_vec(5);
 
 %adyacent node values for v
 %v_w=v_vec(1);
-v_n=v_vec(2);
+%v_n=v_vec(2);
 %v_e=v_vec(3);
-v_s=v_vec(4);
-v_p=v_vec(5);
+%v_s=v_vec(4);
+%v_p=v_vec(5);
 
 %aditional velocities to calculate_difussion terms
 u_nw=u_ad(1);
@@ -31,31 +31,40 @@ p_e=p_vec(3);
 p_s=p_vec(4);
 p_p=p_vec(5);
 
+%adyacent node values for v
+%v_w=v_vec(1);
+v_n=v_vec(2);
+%v_e=v_vec(3);
+v_s=v_vec(4);
+v_p=v_vec(5);
+
+
 %lenght of faces w n, e ,s 1,2,3,4
 fa_w=len_f(1);
 fa_n=len_f(2);
 fa_e=len_f(3);
 fa_s=len_f(4);
 
-%trigonometric funtions for faces 1 ,N) and 2 ,S)
-%angles_fns= [sin cos tan;sin cos tan];
-%sin_fn=angles_fns(1,1);
-cos_fn=angles_fns(1,2);
+%trigonometric functions for faces 1) and 2)
 tan_fn=angles_fns(1,3);
-%sin_fs=angles_fns(2,1);
-cos_fs=angles_fns(2,2);
 tan_fs=angles_fns(2,3);
+cos_fn=angles_fns(1,2);
+cos_fs=angles_fns(2,2);
+
+
 
 %trig  for difusion terms non orthogonal angles in faces,angle phi
-%trig_dif=[tan_w cos_w;tan_n cosn;tan_e cos_e;tan_s cos_s]
-tanp_w=trig_dif(1,1);
-cosp_w=trig_dif(1,2);
-tanp_n=trig_dif(2,1);
-cosp_n=trig_dif(2,2);
-tanp_e=trig_dif(3,1);
-cosp_e=trig_dif(3,2);
-tanp_s=trig_dif(4,1);
-cosp_s=trig_dif(4,2);
+%geom_disn=[tan_w cos_w;tan_n cosn;tan_e cos_e;tan_s cos_s]
+tanp_w =geom_disn(1,1);
+cosp_w =geom_disn(1,2);
+tanp_n =geom_disn(2,1);
+cosp_n =geom_disn(2,2);
+tanp_e =geom_disn(3,1);
+cosp_e =geom_disn(3,2);
+tanp_s =geom_disn(4,1);
+cosp_s =geom_disn(4,2);
+
+
 
 %distances to property node to adjacent nodes 
 delta_ep_w=dist_nodes(1);
@@ -122,15 +131,15 @@ S_dc(4)=s_cd_s;
 %--------convective terms----------
 %mass fluxes for U vel
 %face w
-fu_w=0.5*(u_w+u_p)*fa_w;
+fu_w=0.5*(u_w+u_p)*fa_w*rho;
 [Ap,Anb_uab]=esq_interp_upwind(fu_w,u_w,Ap,Anb_uab,fu_w);
 %face n
 fu_n =0.5*(u_n + u_p)*tan_fn*fa_n*rho;
 %face e
 fu_e = -0.5*(u_p + u_e)*fa_e*rho;
 [Ap,Anb_uab]=esq_interp_upwind(fu_e,u_e,Ap,Anb_uab,fu_e);
-%Face S
-fu_s =-0.5*(u_p + u_s)*fa_s*tan_fs;
+%Face s
+fu_s =-0.5*(u_p + u_s)*fa_s*tan_fs*rho;
 
 %mass fluxes for v
 %face n
