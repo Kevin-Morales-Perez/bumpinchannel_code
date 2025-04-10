@@ -213,7 +213,7 @@ clear Y_2;
 
 % ghost cells Created
 
-save('mesh_bumpchannel.mat', 'X', 'Y');
+%save('mesh_bumpchannel.mat', 'X', 'Y');
 
 if size(X)==size(Y)
     size_mesh=size(X);

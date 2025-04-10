@@ -13,10 +13,10 @@ u_p=u_vec(5);
 
 %adyacent node values for v
 %v_w=v_vec(1);
-%v_n=v_vec(2);
+v_n=v_vec(2);
 %v_e=v_vec(3);
-%v_s=v_vec(4);
-%v_p=v_vec(5);
+v_s=v_vec(4);
+v_p=v_vec(5);
 
 %aditional velocities to calculate_difussion terms
 u_nw=u_ad(1);
@@ -31,14 +31,6 @@ p_e=p_vec(3);
 p_s=p_vec(4);
 p_p=p_vec(5);
 
-%adyacent node values for v
-%v_w=v_vec(1);
-v_n=v_vec(2);
-%v_e=v_vec(3);
-v_s=v_vec(4);
-v_p=v_vec(5);
-
-
 %lenght of faces w n, e ,s 1,2,3,4
 fa_w=len_f(1);
 fa_n=len_f(2);
@@ -51,8 +43,6 @@ tan_fs=angles_fns(2,3);
 cos_fn=angles_fns(1,2);
 cos_fs=angles_fns(2,2);
 
-
-
 %trig  for difusion terms non orthogonal angles in faces,angle phi
 %geom_disn=[tan_w cos_w;tan_n cosn;tan_e cos_e;tan_s cos_s]
 tanp_w =geom_disn(1,1);
@@ -63,8 +53,6 @@ tanp_e =geom_disn(3,1);
 cosp_e =geom_disn(3,2);
 tanp_s =geom_disn(4,1);
 cosp_s =geom_disn(4,2);
-
-
 
 %distances to property node to adjacent nodes 
 delta_ep_w=dist_nodes(1);

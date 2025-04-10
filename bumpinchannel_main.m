@@ -76,6 +76,8 @@ p_press=ones(n_y-1,n_x-1);  %Pressure
 d_e = zeros(size(u_vel)); % Pressure correction coefficients for the velocity field in X
 d_n = zeros(size(v_vel)); % Pressure correction coefficients for the velocity field in Y
 
+%_______________derivative of  pressure respect y___________
+dp_dy=zeros(n_y-1,n_x-1);
 %_______________underrelaxation_factors____________________
 alpha_p=0.5;
 alpha_u=0.5;
@@ -88,7 +90,6 @@ err_req=1e6; %error required
 err_vec=[];%vector to storage the errors
 iter=0;%iterations
 
-
 %################### Main iteration #########################
 %while err > err_req
 %    if err > 1e12
@@ -98,11 +99,6 @@ iter=0;%iterations
     %Momentum equations and pressure corrections
     for i=2:n_y-2
         for j =2:n_x-2
-            nc_w=cell_centroids(i,j-1,:);%west node
-            nc_n=cell_centroids(i-1,j,:);%north node
-            nc_e=cell_centroids(i,j+1,:);%east node
-            nc_s=cell_centroids(i+1,j,:);%south node 
-            nc_p=cell_centroids(i,j,:);%propietary node 
             
             %adyacend node values for u
             u_w=u_vel(i,j-1);
@@ -125,15 +121,8 @@ iter=0;%iterations
             u_ne=u_vel(i-1,j+1);
             u_sw=u_vel(i+1,j-1);
             u_se=u_vel(i+1,j+1);
-            
             u_ad =[u_nw,u_ne,u_sw,u_se];
             
-            v_nw=v_vel(i-1,j-1); 
-            v_ne=v_vel(i-1,j+1); 
-            v_sw=v_vel(i+1,j-1); 
-            v_se=v_vel(i+1,j+1); 
-            v_ad=[v_nw,v_ne,v_sw,v_se];
-
             %pressure node adjacent values 
             p_w=p_press(i,j-1);
             p_n=p_press(i-1,j);
@@ -144,23 +133,54 @@ iter=0;%iterations
 
             len_f = reshape(len_faces(i,j,:),[1 4]);
             angles_fns =reshape(trig_cells(i,j,:,:),[2 3]);
-            diff_trig=reshape(geom_diff(i,j,:,:),[4,2]);
+            geom_disn=reshape(geom_diff(i,j,:,:),[4,2]);
             delt_v=cell_volumes(i,j);
             wl_op=reshape(wlsq_Op(i,j,:,:),[2,4]);
             dist_nodes =reshape(norm_dist_nodes(i,j,:,:),[4,1]);
-            [u_vel(i,j),d_e(i,j),dpy] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,diff_trig,delt_v,wl_op,p_vec,dist_nodes);
+            [u_vel(i,j),d_e(i,j),dp_dy(i,j)] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,dist_nodes);
             %xmomentum
         end
     end
-%{
-    end
+
 
    %x boundary conditions
-   for i=1:n_y
-        for j =1:n_x-1
-            %ymomentum
-        end
-    end
+    for i=2:n_y-2
+            for j =2:n_x-2
+                
+                %adyacend node values for u
+                u_w=u_vel(i,j-1);
+                u_n=u_vel(i-1,j);
+                u_e=u_vel(i,j+1);
+                u_s=u_vel(i+1,j);
+                u_p=u_vel(i,j);
+                u_vec=[u_w,u_n,u_e,u_s,u_p];
+    
+                %adyacent node values for v
+                v_w=u_vel(i,j-1);
+                v_n=u_vel(i-1,j);
+                v_e=u_vel(i,j+1);
+                v_s=u_vel(i+1,j);
+                v_p=u_vel(i,j);
+                v_vec=[v_w,v_n,v_e,v_s,v_p];
+    
+               %aditional velocities to calculate_difussion terms 
+                v_nw=v_vel(i-1,j-1); 
+                v_ne=v_vel(i-1,j+1); 
+                v_sw=v_vel(i+1,j-1); 
+                v_se=v_vel(i+1,j+1); 
+                v_ad=[v_nw,v_ne,v_sw,v_se];
+    
+                len_f = reshape(len_faces(i,j,:),[1 4]);
+                angles_fns =reshape(trig_cells(i,j,:,:),[2 3]);
+                geom_disn=reshape(geom_diff(i,j,:,:),[4,2]);
+                delt_v=cell_volumes(i,j);
+                dist_nodes =reshape(norm_dist_nodes(i,j,:,:),[4,1]);
+                dpy=dp_dy(i,j);
+                [v_vel(i,j),d_n(i,j)] = y_Momentum_eq(nu,rho,u_vec,v_vec,v_ad,len_f,angles_fns,geom_disn,delt_v,dist_nodes,dpy);
+                %xmomentum
+            end
+   end
+   %{
     %y_boundary
     %pressure correction
     %calculating err

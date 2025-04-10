@@ -18,5 +18,5 @@ for i=1:4
 end
 
 g = (dist_pn'*w_D')*w_D*dist_pn;%g matrix , this are the matrices that multiplies the gradient at the left side of the equation
-geof_lws=g^-1*dist_pn'*(w_D'*w_D);%parameter needed to be multiplied per vector of diferences of values to obtain gradient at node P
+geof_lws=g^-1*dist_pn'*(w_D'*w_D);%least square gradient operator 
 end

@@ -63,9 +63,9 @@ cos1=cos(phi1);
 sin1=sin(phi1);
 %sin1=tan1/(1 + tan1^2);
 
-trig_cell(1,1)=tan1;
+trig_cell(1,1)=sin1;
 trig_cell(1,2)=cos1;
-trig_cell(1,3)=sin1;
+trig_cell(1,3)=tan1;
 
 %face 4
 tan2=(y1(4)-y1(1))/dx;
@@ -75,9 +75,9 @@ cos2=cos(phi2);
 %sin2=tan2/(1 + tan2^2);
 sin2=(phi2);
 
-trig_cell(2,1)=tan2;
+trig_cell(2,1)=sin2;
 trig_cell(2,2)=cos2;
-trig_cell(2,3)=sin2;
+trig_cell(2,3)=tan2;
 
 %cetres of faces
 center_face=zeros(4,2);

@@ -1,8 +1,8 @@
 function [trig_diff_terms] =trig_diff_val(node_cord,angles_fns)
 %funtion to obtain trigonometric values for diffusion terms in momentum
 %equations
-%the output has this format [tan_w cos_w;tan_w cos_w;tan_w cos_w;tan_w
-%cos_w] 4 rows 2 columns
+%the output has this format [tan_w cos_w;tan_n cos_n;tan_e cos_e;tan_s
+%cos_s] 4 rows 2 columns
 
 %angle phi tangents ( used for difussion eq)
 %example of node imputs 
@@ -24,7 +24,7 @@ tan_n=tan(atan(angles_fns(1,1)) + atan2(node_cord(2,1)-node_cord(5,1),node_cord(
 phi_n=atan(tan_n);
 cos_n=cos(phi_n);
 
-tan_e=(node_cord(2,2)-node_cord(5,2))/node_cord(3,1)-node_cord(5,1);
+tan_e=(node_cord(3,2)-node_cord(5,2))/(node_cord(3,1)-node_cord(5,1));
 phi_e=atan(tan_e);
 cos_e=cos(phi_e);
 
