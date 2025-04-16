@@ -11,12 +11,14 @@ function [x_sol,f_x] = Newton_Raphson_nd(px,py)
     if py>2
         err=0.8;
     elseif py>1
-        err=0.2;
+        err=0.3;
+    elseif py>0.5
+        err=0.15;
     else
         err=1e-10;
     end
     
-    while (g_x > err)
+    while (abs(g_x) > err)
         A=((pi*x_sol)/0.9) - pi/3;%argument of main function that describes the wall
         f_x =0.05*(sin(A))^4;% main function that describes the wall
         %---------------------Below just derivatives -------------------------

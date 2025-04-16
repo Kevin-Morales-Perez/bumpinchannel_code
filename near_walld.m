@@ -12,6 +12,8 @@ y=node_cords(2);
             p_wall=[1.5,0];
             d_wall=sqrt(( x - p_wall(1) )^2 + (y - p_wall(2))^2 );       
         end
+    elseif  x < 0.3 || x > 1.2
+        d_wall=y;    
     else
     %case 2) Node is above the plate    
     %use  Newton-Rhapson to find nearest distance to the wall
