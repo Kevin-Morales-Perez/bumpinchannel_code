@@ -2,7 +2,7 @@
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
 clear all
-%close all 
+close all 
 clc
 tic
 %________________________Domain____________________________
@@ -16,20 +16,21 @@ load("mesh_bumpchannel.mat");
 l_y = max(Y(:,1));%Lenght in Y
 %_________________geometrical properties___________________
 cell_centroids=zeros(n_y-1,n_x-1,2);%matrix with the centroids [x,y];
-%reshape(cell_centroids(5,5,:),[1,2])
+%reshape(cell_centroids(i,j,:),[1,2])
 len_faces=zeros(n_y-1,n_x-1,4); %matrix which contains lenght of the 4 faces of each cell, 
-%reshape(len_faces(5,5,:),[1 4])
+%reshape(len_faces(i,j,:),[1 4])
 trig_cells=zeros(n_y-1,n_x-1,2,3);%matrix which contains trig funcions for angles in faces 2) and 4) , 
-%reshape(trig_cells(5,5,:,:),[2 3])
+%reshape(trig_cells(i,j,:,:),[2 3])
 face_centers=zeros(n_y-1,n_x-1,4,2);%matrix which contains the coordinates of points at the centres of each face
-%reshape(face_centers(5,5,:,:),[4,2]) 
+%reshape(face_centers(i,j,:,:),[4,2]) 
 cell_volumes=zeros(n_y-1,n_x-1);%matrix which contains the volumen of each cell
 geom_diff=zeros(n_y-1,n_x-1,4,2);%matrix for trig difussion terms(non orthogonal angles between face and nodes), not considered ghost cells 
-%reshape(geom_diff(5,5,:,:),[4,2])
+%reshape(geom_diff(i,j,:,:),[4,2])
 norm_dist_nodes=zeros(n_y-1,n_x-1,4,1);%matrix that contains the norms of the vector that join the adjacent nodes to the inner node
-%reshape(norm_dist_nodes(5,5,:,:),[4,1])
+%reshape(norm_dist_nodes(i,j,:,:),[4,1])
 wlsq_Op=zeros(n_y-1,n_x-1,2,4);%Matrix for weighted least squares operators 
 %reshape(wlsq(i,j,:,:),[2,4]);
+d_mnw=zeros(n_y-1,n_x-1);%Minimun distance to the nearest wall for Spalart - Allmaras Equation
 %Loop to obtain geometrical parameters 
 for i=1:n_y-1
     for j=1:n_x-1
@@ -40,8 +41,10 @@ for i=1:n_y-1
     end
 end
 %___Loop to obtain geometrical parameters needed for difussion equation and
-%for weighted least squares gradient 
+%for weighted least squares gradient,included minimum distance to the wall
+%for Spalart - Allmaras 
 %not included ghost cells 
+
 for i=2:n_y-2
     for j=2:n_x-2
         nc_w=cell_centroids(i,j-1,:);%i,j-1, West
@@ -55,8 +58,24 @@ for i=2:n_y-2
         p_node=reshape(nc_p,[1,2]);%i,j
         geom_diff(i,j,:,:)= trig_diff_val(node_cord,angles_fns); 
         [wlsq_Op(i,j,:,:),norm_dist_nodes(i,j,:,:)]=gradient_lsq_weights(adj_nodes,p_node);
+        %d_mnw(i,j)=near_walld(node_cord(5,:));
+    end
+   
+
+end
+
+for i=2:n_y-2
+    k=0;
+    for j=2:(0.5*n_x)
+        jinv=n_x-2-k;
+        k=k+1;
+        nod_cord=reshape(cell_centroids(i,j,:),[1,2]);
+        d_mnw(i,j)=near_walld(nod_cord);
+        d_mnw(i,jinv)=d_mnw(i,j);
     end
 end
+clear k;
+
 
 %________________________Constants________________________
 vel_ini=9e-5;  %29e-4; %Velocity at the inlet
@@ -141,8 +160,7 @@ iter=0;%iterations
             %xmomentum
         end
     end
-
-
+    
    %x boundary conditions
     for i=2:n_y-2
             for j =2:n_x-2
