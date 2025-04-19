@@ -1,4 +1,4 @@
-function [cell_face,trig_cell,center_face,cell_volume,cell_cent] = cell_collocated_node(x1,y1)
+function [cell_face,trig_cell,center_face,cell_volume,cell_cent,u_vecs_nf] = cell_collocated_node(x1,y1)
 
 %this function calculates all geometric parameters of each cell
 %funtion to calculate the centroid of each cell
@@ -96,3 +96,24 @@ center_face(3,2)=y1(4) + 0.5*dy2;
 %face 4
 center_face(4,1)=x1(1) + 0.5*cell_face(4)*cos2;
 center_face(4,2)=y1(1) + 0.5*cell_face(4)*sin2;
+
+
+%_________________Unitary vectors normal to faces________________________
+%face w
+face_vec_w=[y1(2)-y1(1),x1(2)-x1(1)];
+norm_face_vec_w=[face_vec_w(2),-face_vec_w(1)];
+unorm_face_vec_w=norm_face_vec_w/vecnorm(norm_face_vec_w);
+%face n
+face_vec_n=[y1(3)-y1(2),x1(3)-x1(2)];
+norm_face_vec_n=[face_vec_n(2),-face_vec_n(1)];
+unorm_face_vec_n=norm_face_vec_n/vecnorm(norm_face_vec_n);
+%face e
+face_vec_e=[y1(4)-y1(3),x1(4)-x1(3)];
+norm_face_vec_e=[face_vec_e(2),-face_vec_e(1)];
+unorm_face_vec_e=norm_face_vec_e/vecnorm(norm_face_vec_e);
+%face s
+face_vec_s=[y1(1)-y1(4),x1(1)-x1(4)];
+norm_face_vec_s=[face_vec_s(2),-face_vec_s(1)];
+unorm_face_vec_s=norm_face_vec_s/vecnorm(norm_face_vec_s);
+
+u_vecs_nf=[unorm_face_vec_w;unorm_face_vec_n;unorm_face_vec_e;unorm_face_vec_s];

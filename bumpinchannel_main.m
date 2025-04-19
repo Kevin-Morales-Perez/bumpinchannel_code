@@ -1,7 +1,7 @@
 %Bump in channel problem
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
-clear all
+%clear all
 close all 
 clc
 tic
@@ -19,6 +19,8 @@ cell_centroids=zeros(n_y-1,n_x-1,2);%matrix with the centroids [x,y];
 %reshape(cell_centroids(i,j,:),[1,2])
 len_faces=zeros(n_y-1,n_x-1,4); %matrix which contains lenght of the 4 faces of each cell, 
 %reshape(len_faces(i,j,:),[1 4])
+uvec_norm_faces=zeros(n_y-1,n_x-1,4,2);% Matrix with unitary vectors normal to the faces
+%reshape(uvec_dist_nodes(i,j,:,:),[4,2])
 trig_cells=zeros(n_y-1,n_x-1,2,3);%matrix which contains trig funcions for angles in faces 2) and 4) , 
 %reshape(trig_cells(i,j,:,:),[2 3])
 face_centers=zeros(n_y-1,n_x-1,4,2);%matrix which contains the coordinates of points at the centres of each face
@@ -26,22 +28,23 @@ face_centers=zeros(n_y-1,n_x-1,4,2);%matrix which contains the coordinates of po
 cell_volumes=zeros(n_y-1,n_x-1);%matrix which contains the volumen of each cell
 geom_diff=zeros(n_y-1,n_x-1,4,2);%matrix for trig difussion terms(non orthogonal angles between face and nodes), not considered ghost cells 
 %reshape(geom_diff(i,j,:,:),[4,2])
-norm_dist_nodes=zeros(n_y-1,n_x-1,4,1);%matrix that contains the norms of the vector that join the adjacent nodes to the inner node
+uvec_dist_nodes=zeros(n_y-1,n_x-1,4,2);%matrix that contains the unitary vectors that join the adjacent nodes to the inner node
+%reshape(uvec_dist_nodes(i,j,:,:),[4,2])
+norm_dist_nodes=zeros(n_y-1,n_x-1,4,1);%matrix that contains the norms of the vectors that join the adjacent nodes to the inner node
 %reshape(norm_dist_nodes(i,j,:,:),[4,1])
 wlsq_Op=zeros(n_y-1,n_x-1,2,4);%Matrix for weighted least squares operators 
-%reshape(wlsq(i,j,:,:),[2,4]);
+%reshape(wlsq_Op(i,j,:,:),[2,4]);
 d_mnw=zeros(n_y-1,n_x-1);%Minimun distance to the nearest wall for Spalart - Allmaras Equation
-%Loop to obtain geometrical parameters 
+%Loop to obtain geometrical parameters , includet ghost cells
 for i=1:n_y-1
     for j=1:n_x-1
         x1=[X(i+1,j) X(i,j) X(i,j+1) X(i+1,j+1)];
         y1=[Y(i+1,j) Y(i,j) Y(i,j+1) Y(i+1,j+1)];
-        %[x_cent(i,j),y_cent(i,j),len_faces(i,j,:),trig_cells(i,j,:,:),face_centers(i,j,:,:),cell_volumes(i,j),cell_centroids(i,j,:)]=cell_collocated_node(x1,y1);
-        [len_faces(i,j,:),trig_cells(i,j,:,:),face_centers(i,j,:,:),cell_volumes(i,j),cell_centroids(i,j,:)]=cell_collocated_node(x1,y1);
+         [len_faces(i,j,:),trig_cells(i,j,:,:),face_centers(i,j,:,:),cell_volumes(i,j),cell_centroids(i,j,:),uvec_norm_faces(i,j,:,:)]=cell_collocated_node(x1,y1);
     end
 end
 %___Loop to obtain geometrical parameters needed for difussion equation and
-%for weighted least squares gradient,included minimum distance to the wall
+%for weighted least squares gradient, minimum distance to the wall
 %for Spalart - Allmaras 
 %not included ghost cells 
 
@@ -57,13 +60,12 @@ for i=2:n_y-2
         adj_nodes=node_cord(1:4,:);%
         p_node=reshape(nc_p,[1,2]);%i,j
         geom_diff(i,j,:,:)= trig_diff_val(node_cord,angles_fns); 
-        [wlsq_Op(i,j,:,:),norm_dist_nodes(i,j,:,:)]=gradient_lsq_weights(adj_nodes,p_node);
-        %d_mnw(i,j)=near_walld(node_cord(5,:));
+        [wlsq_Op(i,j,:,:),norm_dist_nodes(i,j,:,:),uvec_dist_nodes(i,j,:,:)]=gradient_lsq_weights(adj_nodes,p_node);
     end
-   
-
 end
 
+%minimum distance to the wall for Spalart - Allmaras eq.
+%not included ghost cells 
 for i=2:n_y-2
     k=0;
     for j=2:(0.5*n_x)
@@ -90,6 +92,7 @@ disp(reynolds)
 u_vel=zeros(n_y-1,n_x-1); %Velocity in X axis
 v_vel=zeros(n_y-1,n_x-1); %Velocity in Y axis
 p_press=ones(n_y-1,n_x-1);  %Pressure
+p_corr=zeros(n_y-1,n_x-1); %pressure corrections
 
 %________________Pressure correction coefitients___________-
 d_e = zeros(size(u_vel)); % Pressure correction coefficients for the velocity field in X
@@ -198,12 +201,50 @@ iter=0;%iterations
                 %xmomentum
             end
    end
-   %{
+   
     %y_boundary
     %pressure correction
+    for i=3:n_y-3
+            for j =3:n_x-3
+                %Matrix for pressures
+                p_m=[0,0,p_press(i-2,j),0,0;0,p_press(i-1,j-1),p_press(i-1,j)...
+                    ,p_press(i-1,j+1),0;p_press(i,j-2),p_press(i,j-1),...
+                    p_press(i,j),p_press(i,j+1),p_press(i,j+2);0,...
+                    p_press(i+1,j-1),p_press(i+1,j),p_press(i+1,j+1),0;...
+                    0,0,p_press(i+2,j),0,0];
+                %lenght of the faces
+                len_faces_cell=reshape(len_faces(i,j,:),[1 4]);
+                %Distances from node P to nodes W,N,S,E
+                d_eps_vec=reshape(norm_dist_nodes(i,j,:,:),[4,1])';
+                %Unitary vectors from node P to nodes W,N,S,E
+                eps_vec=reshape(uvec_dist_nodes(i,j,:,:),[4,2]);
+                %Unitary vectors normal to faces
+                normf_vec=reshape(uvec_dist_nodes(i,j,:,:),[4,2]);
+                %vectors with nodal velocities
+                u_W=[u_vel(i,j-1),v_vel(i,j-1)];
+                u_N=[u_vel(i-1,j),v_vel(i-1,j)];
+                u_E=[u_vel(i,j-1),v_vel(i,j-1)];
+                u_S=[u_vel(i+1,j),v_vel(i+1,j)];
+                u_P=[u_vel(i,j),v_vel(i,j)];
+                u_vec=[u_W;u_N;u_E;u_S;u_P];
+                %coeffitients
+                d_k=[1,1,1,1];%Not yet defined
+                %weighted least squares operator matrix
+                wl_op_w=reshape(wlsq_Op(i,j-1,:,:),[2,4]);
+                wl_op_n=reshape(wlsq_Op(i-1,j,:,:),[2,4]);
+                wl_op_e=reshape(wlsq_Op(i,j+1,:,:),[2,4]);
+                wl_op_s=reshape(wlsq_Op(i+1,j,:,:),[2,4]);
+                wl_op_p=reshape(wlsq_Op(i,j,:,:),[2,4]);
+                wl_op_mat=[wl_op_w;wl_op_n;wl_op_e;wl_op_s;wl_op_p];
+                %pressure correction function
+                p_corr(i,j)=pressure_corr(p_m,len_faces_cell,d_eps_vec,eps_vec,normf_vec,u_vec,d_k,wl_op_mat);
+            end
+    end
+
+    %{
     %calculating err
 end
-%}
+   %}
 
 toc
 

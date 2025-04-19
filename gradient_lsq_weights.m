@@ -1,4 +1,4 @@
-function [gradient_weights_op,norm] =gradient_lsq_weights(adj_nodes,p_node)
+function [gradient_weights_op,norm,unit] =gradient_lsq_weights(adj_nodes,p_node)
 %Function that returns least square gradient operator
 %also return the norms of the vectors that join the nodes 
 %Centroids from adyacent nodes N, faces enumerates as following
@@ -10,6 +10,7 @@ function [gradient_weights_op,norm] =gradient_lsq_weights(adj_nodes,p_node)
 dist_pn=adj_nodes - p_node;
 %Vector of weights
 norm=vecnorm(dist_pn,2,2);
+unit=dist_pn./norm;
 w_v=1./norm;
 w_v=diag(w_v);
 %g matrix , this are the matrices that multiplies the gradient at the left side of the equation
