@@ -1,4 +1,4 @@
-%Bump in channel problem
+%RANS SPalart - Allmaras Solver for bump in channel case (NASA Turbulence modelling resource)
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
 %clear all
@@ -6,7 +6,7 @@ close all
 clc
 tic
 %________________________Domain____________________________
-%Load mesh
+%#################   Loading  mesh    ######################
 %X for x an Y for Y coordinates of the points of the mesh
 load("mesh_bumpchannel.mat");
 %load("mesh_bumpchannel0_10test.mat");
@@ -79,20 +79,36 @@ end
 clear k;
 
 
-%________________________Constants________________________
+%________________________Flow conditions________________________
 vel_ini=9e-5;  %29e-4; %Velocity at the inlet
 rho =1.2; %Density (Kg/m3)
-nu =0.0000174; %Viscosity (Kg/(m*s))
-reynolds = vel_ini*rho*l_y/nu;%Reynolds number 
+mu =0.0000174; %Molecular Viscosity (Kg/(m*s))
+nu=mu/rho; %Kinematic Viscosity
+reynolds_numb = vel_ini*rho*l_y/mu;%Reynolds number 
 flux_mass=l_y*vel_ini;%mass flux
 fprintf("Reynolds Number ")
-disp(reynolds)
+disp(reynolds_numb)
+
+
+%_____________________Constant_______________________________
+karman_k = 0.41; % Von Karman constant
+b_k =7;%Smoth wall constant 
 
 %_______________Velocity and presure fields_______________
 u_vel=zeros(n_y-1,n_x-1); %Velocity in X axis
 v_vel=zeros(n_y-1,n_x-1); %Velocity in Y axis
 p_press=ones(n_y-1,n_x-1);  %Pressure
 p_corr=zeros(n_y-1,n_x-1); %pressure corrections
+
+%________________Reynolds Stress tensor Rij_______________________
+tau_xx=zeros(n_y-1,n_x-1);%-rho*u'2- Normal
+tau_xy=zeros(n_y-1,n_x-1);%-rho*u'v'- Shear
+tau_yy=zeros(n_y-1,n_x-1);%-rho*v'2- Normal
+
+%_________________Eddy viscosity_________________________________-
+mu_turbulent=zeros(n_y-1,n_x-1); %Molecular Eddy Viscosity 
+nu_turbulent=mu_turbulent/rho;%Molecular Eddy Viscosity  
+
 
 %________________Pressure correction coefitients___________-
 d_e = zeros(size(u_vel)); % Pressure correction coefficients for the velocity field in X
