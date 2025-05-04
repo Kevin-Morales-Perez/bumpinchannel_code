@@ -22,6 +22,7 @@ delt_pP=pP(1:4)-pnodP;
 delt_pA=pA(1:4)-pnodA;
 gradpP=wlsq_op_P*delt_pP;
 gradpA=wlsq_op_A*delt_pA;
+eps_vec=eps_vec';
 %________________________main formula _____________________________________
 uf= 0.5*dot((uP+uA),normf_v) +0.5*(dp+da)*(pnodP - pnodA)/d_eps -0.5*dot(((dp*gradpP) + (da*gradpA)),eps_vec);
 end
