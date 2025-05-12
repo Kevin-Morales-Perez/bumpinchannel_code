@@ -172,7 +172,7 @@ s_dc=s_dc(~isnan(s_dc));
 
 A_P_i = sum(Ap); % Coefficient needed to calculate U_p and pressure correction
 d_iJ=-delt_v/(A_P_i*dy); %coeficient pressure corrections  
-v_star =(1/A_P_i)*(sum(Anb_vab) + sum(s_dc) - dpy*delt_v + dx_tau_xy*delt_v + dy_tau_yy*delt_v); %New U_P, main output
+v_star =(1/A_P_i)*(sum(Anb_vab) + sum(s_dc) - dpy*delt_v - dx_tau_xy*delt_v - dy_tau_yy*delt_v); %New U_P, main output
 
 end
 

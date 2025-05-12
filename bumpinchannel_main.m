@@ -301,6 +301,37 @@ iter=0;%iterations
         end
     end
 %}
+    %Computing Reynolds Stresses using Boussinesq assumption
+    for i=2:n_y-2
+            for j =2:n_x-2
+
+                %adyacend node values for u
+                u_w=u_vel(i,j-1);
+                u_n=u_vel(i-1,j);
+                u_e=u_vel(i,j+1);
+                u_s=u_vel(i+1,j);
+                u_p=u_vel(i,j);
+                u_vec=[u_w,u_n,u_e,u_s,u_p];
+    
+                %adyacent node values for v
+                v_w=u_vel(i,j-1);
+                v_n=u_vel(i-1,j);
+                v_e=u_vel(i,j+1);
+                v_s=u_vel(i+1,j);
+                v_p=u_vel(i,j);
+                v_vec=[v_w,v_n,v_e,v_s,v_p];
+                
+                %Weighted least squares operator
+                wl_op=reshape(wlsq_Op(i,j,:,:),[2,4]);
+
+                %turbulent viscosity
+                nu_turbulent_val=nu_turbulent(i,j);
+                
+                [tau_xx(i,j),tau_xy(i,j),tau_yy(i,j)]=ba_turbulent_stresses(u_vec,v_vec,wl_op,nu_turbulent_val);
+
+            end
+    end
+
 
     %{
     %calculating err
