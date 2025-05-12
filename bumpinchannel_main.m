@@ -1,4 +1,5 @@
-%RANS SPalart - Allmaras Solver for bump in channel case (NASA Turbulence modelling resource)
+%RANS SPalart - Allmaras Solver for bump in channel case 
+% (NASA Turbulence modelling resource)
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
 %clear all
@@ -82,17 +83,13 @@ clear k;
 %________________________Flow conditions________________________
 vel_ini=9e-5;  %29e-4; %Velocity at the inlet
 rho =1.2; %Density (Kg/m3)
-mu =0.0000174; %Molecular Viscosity (Kg/(m*s))
-nu=mu/rho; %Kinematic Viscosity
+mu =0.0000174; %Molecular dynamic Viscosity (Kg/(m*s))
+nu=mu/rho; %Moleculae kinematic Viscosity
 reynolds_numb = vel_ini*rho*l_y/mu;%Reynolds number 
 flux_mass=l_y*vel_ini;%mass flux
 fprintf("Reynolds Number ")
 disp(reynolds_numb)
 
-
-%_____________________Constant_______________________________
-karman_k = 0.41; % Von Karman constant
-b_k =7;%Smoth wall constant 
 
 %_______________Velocity and presure fields_______________
 u_vel=zeros(n_y-1,n_x-1); %Velocity in X axis
@@ -107,15 +104,18 @@ tau_yy=zeros(n_y-1,n_x-1);%-rho*v'2- Normal
 
 %_________________Eddy viscosity_________________________________-
 mu_turbulent=zeros(n_y-1,n_x-1); %Molecular Eddy Viscosity 
-nu_turbulent=mu_turbulent/rho;%Molecular Eddy Viscosity  
+nu_turbulent=mu_turbulent/rho;%kinematic Eddy Viscosity  
+nu_tilde=zeros(n_y-1,n_x-1);%Modified eddy viscosity for SA transport
 
 
 %________________Pressure correction coefitients___________-
 d_e = zeros(size(u_vel)); % Pressure correction coefficients for the velocity field in X
 d_n = zeros(size(v_vel)); % Pressure correction coefficients for the velocity field in Y
 
-%_______________derivative of  pressure respect y___________
+%_______________useful derivatives from X momentum to use in Y moementum eq. ___________
 dp_dy=zeros(n_y-1,n_x-1);
+dx_tau_xy=zeros(n_y-1,n_x-1);
+
 %_______________underrelaxation_factors____________________
 alpha_p=0.5;
 alpha_u=0.5;
@@ -135,6 +135,7 @@ iter=0;%iterations
 %        break
 %    end
     %Momentum equations and pressure corrections
+    % x - momentum
     for i=2:n_y-2
         for j =2:n_x-2
             
@@ -168,19 +169,38 @@ iter=0;%iterations
             p_s=p_press(i+1,j);
             p_p=p_press(i,j);
             p_vec=[p_w,p_n,p_e,p_s,p_p];
+            
+            %tau_xx  node adjacent values 
+            tau_xx_w=tau_xx(i,j-1);
+            tau_xx_n=tau_xx(i-1,j);
+            tau_xx_e=tau_xx(i,j+1);
+            tau_xx_s=tau_xx(i+1,j);
+            tau_xx_p=tau_xx(i,j);
+            tau_xx_vec=[tau_xx_w,tau_xx_n,tau_xx_e,tau_xx_s,tau_xx_p];
 
+            %tau_xy  node adjacent values 
+            tau_xy_w=tau_xy(i,j-1);
+            tau_xy_n=tau_xy(i-1,j);
+            tau_xy_e=tau_xy(i,j+1);
+            tau_xy_s=tau_xy(i+1,j);
+            tau_xy_p=tau_xy(i,j);
+            tau_xy_vec=[tau_xy_w,tau_xy_n,tau_xy_e,tau_xy_s,tau_xy_p];
+
+            %geometrical parameters
             len_f = reshape(len_faces(i,j,:),[1 4]);
             angles_fns =reshape(trig_cells(i,j,:,:),[2 3]);
             geom_disn=reshape(geom_diff(i,j,:,:),[4,2]);
             delt_v=cell_volumes(i,j);
             wl_op=reshape(wlsq_Op(i,j,:,:),[2,4]);
             dist_nodes =reshape(norm_dist_nodes(i,j,:,:),[4,1]);
-            [u_vel(i,j),d_e(i,j),dp_dy(i,j)] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,dist_nodes);
-            %xmomentum
+            [u_vel(i,j),d_e(i,j),dp_dy(i,j),dx_tau_xy(i,j)] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,tau_xx_vec,tau_xy_vec,dist_nodes);
+            
         end
     end
     
    %x boundary conditions
+
+    %Y momentum
     for i=2:n_y-2
             for j =2:n_x-2
                 
@@ -206,15 +226,25 @@ iter=0;%iterations
                 v_sw=v_vel(i+1,j-1); 
                 v_se=v_vel(i+1,j+1); 
                 v_ad=[v_nw,v_ne,v_sw,v_se];
+
+                %tau_yy  node adjacent values 
+                tau_yy_w=tau_yy(i,j-1);
+                tau_yy_n=tau_yy(i-1,j);
+                tau_yy_e=tau_yy(i,j+1);
+                tau_yy_s=tau_yy(i+1,j);
+                tau_yy_p=tau_yy(i,j);
+                tau_yy_vec=[tau_yy_w,tau_yy_n,tau_yy_e,tau_yy_s,tau_yy_p];
     
                 len_f = reshape(len_faces(i,j,:),[1 4]);
                 angles_fns =reshape(trig_cells(i,j,:,:),[2 3]);
                 geom_disn=reshape(geom_diff(i,j,:,:),[4,2]);
                 delt_v=cell_volumes(i,j);
+                wl_op=reshape(wlsq_Op(i,j,:,:),[2,4]);
                 dist_nodes =reshape(norm_dist_nodes(i,j,:,:),[4,1]);
                 dpy=dp_dy(i,j);
-                [v_vel(i,j),d_n(i,j)] = y_Momentum_eq(nu,rho,u_vec,v_vec,v_ad,len_f,angles_fns,geom_disn,delt_v,dist_nodes,dpy);
-                %xmomentum
+                dx_tau_xy_val=dx_tau_xy(i,j);
+                [v_vel(i,j),d_n(i,j)] = y_Momentum_eq(nu,rho,u_vec,v_vec,v_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,tau_yy_vec,dist_nodes,dpy,dx_tau_xy_val);
+                
             end
    end
    
@@ -256,6 +286,21 @@ iter=0;%iterations
                 p_corr(i,j)=pressure_corr(p_m,len_faces_cell,d_eps_vec,eps_vec,normf_vec,u_vec,d_k,wl_op_mat);
             end
     end
+%{
+    %Eddy viscosity
+    for i=2:n_y-2
+        for j=2:n_x-2
+            %____________Nu tilde____________________
+            nu_tilde(i,j) = sa_transport_nutilde(nu,rho);
+            x_sa=nutilde(i,j)/nu;
+            cv1=7.1;
+            fv1=x_sa^3/(x_sa^3 + cv1^3);
+            %______________Nu_turbulent_______________
+            nu_turbulent(i,j)=fv1*nu_tilde(i,j);
+            mu_turbulent(i,j)=nu_turbulent(i,j);
+        end
+    end
+%}
 
     %{
     %calculating err

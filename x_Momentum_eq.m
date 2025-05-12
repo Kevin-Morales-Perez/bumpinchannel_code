@@ -1,4 +1,4 @@
-function [u_star,d_Ij,dpy] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,dist_nodes)
+function [u_star,d_Ij,dpy,dx_tau_xy] = x_Momentum_eq(nu,rho,u_vec,v_vec,u_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,p_vec,tau_xx_vec,tau_xy_vec,dist_nodes)
 % x Momentum equation 
 % Finite volume x Momentum equation
 %Example of imput values
@@ -30,6 +30,20 @@ p_n=p_vec(2);
 p_e=p_vec(3);
 p_s=p_vec(4);
 p_p=p_vec(5);
+
+%tau_xx at nodes W N E S and P
+tau_xx_w=tau_xx_vec(1);
+tau_xx_n=tau_xx_vec(2);
+tau_xx_e=tau_xx_vec(3);
+tau_xx_s=tau_xx_vec(4);
+tau_xx_p=tau_xx_vec(5);
+
+%tau_xy at nodes W N E S and P
+tau_xy_w=tau_xy_vec(1);
+tau_xy_n=tau_xy_vec(2);
+tau_xy_e=tau_xy_vec(3);
+tau_xy_s=tau_xy_vec(4);
+tau_xy_p=tau_xy_vec(5);
 
 %lenght of faces w n, e ,s 1,2,3,4
 fa_w=len_f(1);
@@ -147,6 +161,19 @@ grad_P= wl_op*delta_P;
 dpx=grad_P(1);
 dpy=grad_P(2);
 
+
+%Derivative of u'2- respect X
+delta_tau_xx=[tau_xx_w;tau_xx_n;tau_xx_e;tau_xx_s]-tau_xx_p;
+grad_tau_xx=wl_op*delta_tau_xx;
+dx_tau_xx=grad_tau_xx(1);
+%dy_tau_xx=grad_tau_xx(2);
+
+%Derivative of uv'- respect y
+delta_tau_xy=[tau_xy_w;tau_xy_n;tau_xy_e;tau_xy_s]-tau_xy_p;
+grad_tau_xy=wl_op*delta_tau_xy;
+dx_tau_xy=grad_tau_xy(1);
+dy_tau_xy=grad_tau_xy(2);
+
 %--------    Final Equation    ----------
 Ap = Ap(~isnan(Ap));
 Anb_uab = Anb_uab(~isnan(Anb_uab));
@@ -154,6 +181,6 @@ S_dc = S_dc(~isnan(S_dc));
 
 a_P_i = sum(Ap); % Coefficient needed to calculate U_p and pressure correction;
 d_Ij = -delt_v/ (a_P_i * dx);
-u_star = (1 / a_P_i) * (sum(Anb_uab) + sum(S_dc) - dpx * delt_v); % New U_P, main output
+u_star = (1 / a_P_i) * (sum(Anb_uab) + sum(S_dc) - dpx * delt_v +dx_tau_xx*delt_v + dy_tau_xy*delt_v); % New U_P, main output
 
 end
