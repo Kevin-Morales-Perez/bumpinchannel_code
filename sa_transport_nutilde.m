@@ -1,4 +1,4 @@
-function [nu_tilde_k_plus_1] = sa_transport_nutilde(nu,nu_tilde_k,d_wall,delta_v,u_vec,v_vec,wl_op)
+function [nu_tilde_k_plus_1] = sa_transport_nutilde(nu,nu_tilde_k_vec,d_wall,delta_v,u_vec,v_vec,wl_op)
 %___________  Spalart Allmaras turbulence transport equation _____ 
 
 
@@ -13,7 +13,7 @@ cw3=2;%wall parameter 3
 cw3e_6=cw3^-6;%wall parameter 3 ^-6
 cv1=7.1; %Viscous parameter 1 
 
-%__________________Velocity node values__________________________
+%______      Velocity adjacent cell node values       _________
 u_w=u_vec(1);
 u_n=u_vec(2);
 u_e=u_vec(3);
@@ -25,15 +25,46 @@ v_n=v_vec(2);
 v_e=v_vec(3);
 v_s=v_vec(4);
 v_p=v_vec(5);
+%__________________      Gradients      ______________________
+
+%grad(U)
+delta_u_vel=[u_w;u_n;u_e;u_s]-u_p;
+grad_u_vel=wl_op*delta_u_vel;
+%du_dx=grad_u_vel(1); Not used
+du_dy=grad_u_vel(2);
+
+%grad(V)
+delta_v_vel=[v_w;v_n;v_e;v_s]-v_p;
+grad_v_vel=wl_op*delta_v_vel;
+dv_dx=grad_v_vel(1);
+%dv_dy=grad_v_vel(2); Not used
+
+%__________   Nu_tilde_k adjacent cell node values   ________
+nu_tilde_k_w=nu_tilde_k_vec(1);
+nu_tilde_k_n=nu_tilde_k_vec(2);
+nu_tilde_k_e=nu_tilde_k_vec(3);
+nu_tilde_k_s=nu_tilde_k_vec(4);
+nu_tilde_k_p=nu_tilde_k_vec(5);
+
+nu_tilde_k = nu_tilde_k_p;
+
+
+%____________________________________________________________
 
 %##########       Convection     ##############  
 
 %##########        Difusion     ############### 
 
 %##########  Non Linear Difusion  #############
+%Grad(nu_tilde_k)
+delta_nu_tilde=[nu_tilde_k_w;nu_tilde_k_n;nu_tilde_k_e;nu_tilde_k_s]-nu_tilde_k_p;
+grad_nu_tilde=wl_op*delta_nu_tilde;
+dnu_tilde_dx=grad_nu_tilde(1);
+dnu_tilde_dy=grad_nu_tilde(2);
+
+nonlin_diff= (cb2/sigma)*(dnu_tilde_dx^2 + dnu_tilde_dy^2);
 
 %##########        Sources        #############
-
 
 %  Implicit Taylor 1st order expansion nu_tilde_k+1
 
@@ -61,22 +92,11 @@ fv2_prime=-x_nu_prime/(1+ x_nu*fv1) + (x_nu/(1 + x_nu*fv1)^2)*...
 
 %modified vorticity (gamma tilde)
 
-%_______omega_low=sqrt(omega_up_ij*omega_up_ij)_______
-%Gradients to obtain derivates
-%grad(U)
-delta_u_vel=[u_w;u_n;u_e;u_s]-u_p;
-grad_u_vel=wl_op*delta_u_vel;
-%du_dx=grad_u_vel(1); Not used
-du_dy=grad_u_vel(2);
-%grad(V)
-delta_v_vel=[v_w;v_n;v_e;v_s]-v_p;
-grad_v_vel=wl_op*delta_v_vel;
-dv_dx=grad_v_vel(1);
-%dv_dy=grad_v_vel(2); Not used
+%-------  omega_low=sqrt(omega_up_ij*omega_up_ij ---------
 
 omega_up_12=du_dy -dv_dx;
 s_vort=sqrt(2*omega_up_12^2);% vorticity (Frobenius norm of sigma_ij)
-%------------------------------------------------------------
+%----------------------------------------------------
 s_vort_tilde= s_vort +  nu_tilde_k/((kappa^2)*(d_wall^2));%modified vorticity
 s_vort_tilde_prime=(nu_tilde_k/((kappa^2)*(d_wall^2)))*fv2_prime + fv2/((kappa^2)*(d_wall^2));
 

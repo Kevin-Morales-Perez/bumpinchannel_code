@@ -1,5 +1,5 @@
-%RANS SPalart - Allmaras Solver for bump in channel case 
-% (NASA Turbulence modelling resource)
+%RANS Spalart - Allmaras Solver for bump in channel ...
+% NASA Turbulence modelling resource verification case
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
 %clear all
@@ -97,12 +97,12 @@ v_vel=zeros(n_y-1,n_x-1); %Velocity in Y axis
 p_press=ones(n_y-1,n_x-1);  %Pressure
 p_corr=zeros(n_y-1,n_x-1); %pressure corrections
 
-%________________Reynolds Stress tensor Rij_______________________
+%________________Reynolds Stress tensor Tau ij_______________________
 tau_xx=zeros(n_y-1,n_x-1);%-rho*u'2- Normal
 tau_xy=zeros(n_y-1,n_x-1);%-rho*u'v'- Shear
 tau_yy=zeros(n_y-1,n_x-1);%-rho*v'2- Normal
 
-%_________________Eddy viscosity_________________________________-
+%_________________Eddy viscosity Nu_t_________________________________-
 mu_turbulent=zeros(n_y-1,n_x-1); %Molecular Eddy Viscosity 
 nu_turbulent=mu_turbulent/rho;%kinematic Eddy Viscosity  
 nu_tilde=zeros(n_y-1,n_x-1);%Modified eddy viscosity for SA transport
