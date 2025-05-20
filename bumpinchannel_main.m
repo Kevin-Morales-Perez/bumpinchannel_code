@@ -103,7 +103,6 @@ tau_xy=zeros(n_y-1,n_x-1);%-rho*u'v'- Shear
 tau_yy=zeros(n_y-1,n_x-1);%-rho*v'2- Normal
 
 %_________________Eddy viscosity Nu_t_________________________________-
-mu_turbulent=zeros(n_y-1,n_x-1); %Molecular Eddy Viscosity 
 nu_turbulent=mu_turbulent/rho;%kinematic Eddy Viscosity  
 nu_tilde=zeros(n_y-1,n_x-1);%Modified eddy viscosity for SA transport
 
@@ -286,21 +285,64 @@ iter=0;%iterations
                 p_corr(i,j)=pressure_corr(p_m,len_faces_cell,d_eps_vec,eps_vec,normf_vec,u_vec,d_k,wl_op_mat);
             end
     end
-%{
+
     %Eddy viscosity
     for i=2:n_y-2
         for j=2:n_x-2
-            %____________Nu tilde____________________
-            nu_tilde(i,j) = sa_transport_nutilde(nu,rho);
-            x_sa=nutilde(i,j)/nu;
+            %____________ Nu tilde for Nu _turbulent ____________________
+            %adyacend node values for u
+            nu_tilde_w=nu_tilde(i,j-1);
+            nu_tilde_n=nu_tilde(i-1,j);
+            nu_tilde_e=nu_tilde(i,j+1);
+            nu_tilde_s=nu_tilde(i+1,j);
+            nu_tilde_p=nu_tilde(i,j);
+            nu_tilde_vec=[nu_tilde_w,nu_tilde_n,nu_tilde_e,nu_tilde_s,nu_tilde_p];
+
+            d_wall=d_mnw(i,j);%minimum distance to the wall
+            delta_vol=cell_volumes(i,j);%volume of the cell
+
+            %adyacend node values for u
+            u_w=u_vel(i,j-1);
+            u_n=u_vel(i-1,j);
+            u_e=u_vel(i,j+1);
+            u_s=u_vel(i+1,j);
+            u_p=u_vel(i,j);
+            u_vec=[u_w,u_n,u_e,u_s,u_p];
+
+            %adyacent node values for v
+            v_w=u_vel(i,j-1);
+            v_n=u_vel(i-1,j);
+            v_e=u_vel(i,j+1);
+            v_s=u_vel(i+1,j);
+            v_p=u_vel(i,j);
+            v_vec=[v_w,v_n,v_e,v_s,v_p];
+
+            %Weighted least squares operator
+            wl_op=reshape(wlsq_Op(i,j,:,:),[2,4]);
+
+            %Nu tilde additional values to calculate_difussion terms
+            
+            nu_tilde_nw=nu_tilde(i-1,j-1);
+            nu_tilde_ne=nu_tilde(i-1,j+1);
+            nu_tilde_sw=nu_tilde(i+1,j-1);
+            nu_tilde_se=nu_tilde(i+1,j+1);
+            nu_tilde_ad =[nu_tilde_nw,nu_tilde_ne,nu_tilde_sw,nu_tilde_se];
+            
+            %Geometrical parameters
+            geom_disn=reshape(geom_diff(i,j,:,:),[4,2]);
+            dist_nodes =reshape(norm_dist_nodes(i,j,:,:),[4,1]);
+            len_f = reshape(len_faces(i,j,:),[1 4]);
+            angles_fns =reshape(trig_cells(i,j,:,:),[2 3]);
+
+            nu_tilde(i,j) = sa_transport_nutilde(nu,nu_tilde_vec,d_wall,delta_vol,u_vec,v_vec,wl_op,nu_tilde_ad,geom_disn,dist_nodes,len_f,angles_fns);
+            x_sa=nu_tilde(i,j)/nu;
             cv1=7.1;
             fv1=x_sa^3/(x_sa^3 + cv1^3);
             %______________Nu_turbulent_______________
             nu_turbulent(i,j)=fv1*nu_tilde(i,j);
-            mu_turbulent(i,j)=nu_turbulent(i,j);
         end
     end
-%}
+
     %Computing Reynolds Stresses using Boussinesq assumption
     for i=2:n_y-2
             for j =2:n_x-2

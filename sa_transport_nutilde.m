@@ -1,4 +1,6 @@
-function [nu_tilde_k_plus_1] = sa_transport_nutilde(nu,nu_tilde_k_vec,d_wall,delta_v,u_vec,v_vec,wl_op,nu_tilde_ad,geom_disn,dist_nodes,len_f,angles_fns)
+function [nu_tilde_k_plus_1] = sa_transport_nutilde(nu,nu_tilde_k_vec,...
+    d_wall,delta_v,u_vec,v_vec,wl_op,nu_tilde_ad,geom_disn,dist_nodes,...
+    len_f,angles_fns)
 %___________  Spalart Allmaras turbulence transport equation _____ 
 
 %_____________________Constants_______________________________
@@ -113,7 +115,8 @@ phi_A_vec=[nu_tilde_k_w,nu_tilde_k_n,nu_tilde_k_e,nu_tilde_k_s];
 mf_t=[fv_xw,fv_n,fv_xe,fv_s];% total mass fluxes
 
 for i=1:4
-   [Ap_c,Anb_nu_ab_c]=upwind_1st_sa(mf_omi(i),phi_A_vec(i),Ap_c,Anb_nu_ab_c,mf_t(i),i);
+   [Ap_c,Anb_nu_ab_c]=upwind_1st_sa(mf_omi(i),phi_A_vec(i),Ap_c,...
+       Anb_nu_ab_c,mf_t(i),i);
 end
 
 %##########        Difusion     ############### 
@@ -125,7 +128,8 @@ gamma_up_sa=nu_tilde_k + nu;%coefficient for linear diffusion in SA eq.
 
 %-----Face W -----
 %non ortogonal diffusion term
-s_cd_w= gamma_up_sa*tanp_w*0.25*(nu_tilde_k_nw + nu_tilde_k_n - nu_tilde_k_sw - nu_tilde_k_s);
+s_cd_w= gamma_up_sa*tanp_w*0.25*(nu_tilde_k_nw + nu_tilde_k_n - ...
+    nu_tilde_k_sw - nu_tilde_k_s);
 %diffusion term Gradient P_Ai
 d_w = gamma_up_sa*fa_w/(cosp_w*delta_ep_w);
 
@@ -135,7 +139,8 @@ S_dc(1)=s_cd_w;
 
 %----- Face N -----
 %non ortogonal diffusion term
-s_cd_n= gamma_up_sa*tanp_n*0.25*(nu_tilde_k_ne+ nu_tilde_k_e -nu_tilde_k_nw- nu_tilde_k_w);
+s_cd_n= gamma_up_sa*tanp_n*0.25*(nu_tilde_k_ne+ nu_tilde_k_e -...
+    nu_tilde_k_nw- nu_tilde_k_w);
 %diffusion term Gradient P_Ai
 d_n = gamma_up_sa*fa_n/(cosp_n*delta_ep_n);
 
@@ -145,7 +150,8 @@ S_dc(2)=s_cd_n;
 
 %----- Face E -----
 %non ortogonal diffusion term
-s_cd_e= gamma_up_sa*tanp_e*0.25*(nu_tilde_k_se+ nu_tilde_k_s -nu_tilde_k_ne- nu_tilde_k_n);
+s_cd_e= gamma_up_sa*tanp_e*0.25*(nu_tilde_k_se+ nu_tilde_k_s-...
+    nu_tilde_k_ne- nu_tilde_k_n);
 %diffusion term Gradient P_Ai
 d_e = gamma_up_sa*fa_e/(cosp_e*delta_ep_e);
 
@@ -155,7 +161,8 @@ S_dc(3)=s_cd_e;
 
 %----- Face S -----
 %non ortogonal diffusion term
-s_cd_s= gamma_up_sa*tanp_s*0.25*(nu_tilde_k_sw+ nu_tilde_k_w -nu_tilde_k_se- nu_tilde_k_e);
+s_cd_s= gamma_up_sa*tanp_s*0.25*(nu_tilde_k_sw+ nu_tilde_k_w...
+    -nu_tilde_k_se- nu_tilde_k_e);
 %diffusion term Gradient P_Ai
 d_s = gamma_up_sa*fa_s/(cosp_s*delta_ep_s);
 
@@ -166,7 +173,8 @@ S_dc(4)=s_cd_s;
 
 %##########  Non Linear Difusion  #############
 %Grad(nu_tilde_k)
-delta_nu_tilde=[nu_tilde_k_w;nu_tilde_k_n;nu_tilde_k_e;nu_tilde_k_s]-nu_tilde_k_p;
+delta_nu_tilde=[nu_tilde_k_w;nu_tilde_k_n;nu_tilde_k_e;nu_tilde_k_s]...
+    -nu_tilde_k_p;
 grad_nu_tilde=wl_op*delta_nu_tilde;
 dnu_tilde_dx=grad_nu_tilde(1);
 dnu_tilde_dy=grad_nu_tilde(2);
@@ -195,9 +203,9 @@ fv1_prime = ((3*x_nu_prime^2)/(x_nu^3+ cv1^3))*x_nu_prime - x_nu_prime*...
     ((3*(x_nu^5))/((x_nu^3 +cv1^3)^2));
 
 %Viscous damping function 2 fv2
-fv2=1 - x_n/(1+x_nu*fv1);
+fv2=1 - x_nu/(1+x_nu*fv1);
 fv2_prime=-x_nu_prime/(1+ x_nu*fv1) + (x_nu/(1 + x_nu*fv1)^2)*...
-    (x_nu_prime*fv1 + x*fv1_prime);
+    (x_nu_prime*fv1 + x_nu*fv1_prime);
 
 %modified vorticity (gamma tilde)
 
@@ -207,7 +215,8 @@ omega_up_12=du_dy -dv_dx;
 s_vort=sqrt(2*omega_up_12^2);% vorticity (Frobenius norm of sigma_ij)
 %----------------------------------------------------
 s_vort_tilde= s_vort +  nu_tilde_k/((kappa^2)*(d_wall^2));%modified vorticity
-s_vort_tilde_prime=(nu_tilde_k/((kappa^2)*(d_wall^2)))*fv2_prime + fv2/((kappa^2)*(d_wall^2));
+s_vort_tilde_prime=(nu_tilde_k/((kappa^2)*(d_wall^2)))*fv2_prime +...
+    fv2/((kappa^2)*(d_wall^2));
 
 %Tp
 tp=cb1*s_vort_tilde*nu_tilde_k;
@@ -245,6 +254,14 @@ Anb_nu_ab_c= Anb_nu_ab_c(~isnan(Anb_nu_ab_c));
 Ap_d = Ap_d(~isnan(Ap_d));
 Anb_uab_d = Anb_uab_d(~isnan(Anb_uab_d));
 S_dc = S_dc(~isnan(S_dc));
+
+Ap_c=sum(Ap_c);
+Anb_nu_ab_c=sum(Anb_nu_ab_c);
+
+Ap_d=sum(Ap_d);
+Anb_uab_d=sum(Anb_uab_d);
+S_dc=sum(S_dc);
+
 
 left_s_coeff= Ap_c + Ap_d - delta_v*q_s_prime;
 right_s_coeff= Anb_nu_ab_c + Anb_uab_d + S_dc+ delta_v*(nonlin_diff + q_s - q_s_prime*nu_tilde_k);
