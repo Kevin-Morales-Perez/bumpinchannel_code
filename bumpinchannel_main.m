@@ -1,4 +1,4 @@
-%RANS Spalart - Allmaras Solver for bump in channel ...
+%RANS Spalart - Allmaras Solver for bump in channel 
 % NASA Turbulence modelling resource verification case
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
@@ -81,7 +81,7 @@ clear k;
 
 
 %________________________Flow conditions________________________
-vel_ini=9e-5;  %29e-4; %Velocity at the inlet
+vel_inlet=27;  %Velocity at the inlet (m/s)
 rho =1.2; %Density (Kg/m3)
 mu =0.0000174; %Molecular dynamic Viscosity (Kg/(m*s))
 nu=mu/rho; %Moleculae kinematic Viscosity
@@ -103,8 +103,13 @@ tau_xy=zeros(n_y-1,n_x-1);%-rho*u'v'- Shear
 tau_yy=zeros(n_y-1,n_x-1);%-rho*v'2- Normal
 
 %_________________Eddy viscosity Nu_t_________________________________-
-nu_turbulent=mu_turbulent/rho;%kinematic Eddy Viscosity  
+nu_turbulent=zeros(n_y-1,n_x-1);%kinematic Eddy Viscosity  
 nu_tilde=zeros(n_y-1,n_x-1);%Modified eddy viscosity for SA transport
+
+
+%_________________Fixed boundary conditions____________________________-
+u_vel(:,1)=vel_inlet;%velocity at the inlet
+v_vel(:,1)=0;
 
 
 %________________Pressure correction coefitients___________-
@@ -198,6 +203,7 @@ iter=0;%iterations
     end
     
    %x boundary conditions
+   u_vel=u_vel_boundaries(u_vel,n_x,n_y);
 
     %Y momentum
     for i=2:n_y-2
@@ -245,9 +251,10 @@ iter=0;%iterations
                 [v_vel(i,j),d_n(i,j)] = y_Momentum_eq(nu,rho,u_vec,v_vec,v_ad,len_f,angles_fns,geom_disn,delt_v,wl_op,tau_yy_vec,dist_nodes,dpy,dx_tau_xy_val);
                 
             end
-   end
-   
+    end
     %y_boundary
+    v_vel=v_vel_boundaries(v_vel,n_x,n_y);
+
     %pressure correction
     for i=3:n_y-3
             for j =3:n_x-3
@@ -285,6 +292,19 @@ iter=0;%iterations
                 p_corr(i,j)=pressure_corr(p_m,len_faces_cell,d_eps_vec,eps_vec,normf_vec,u_vec,d_k,wl_op_mat);
             end
     end
+
+    p_press=p_press + alpha_p*alpha_p;% Pressure correction
+    p_pressure=p_press_boundaries(p_press,n_x,n_y);
+
+    %correction of velocity in X
+    %again x boundary conditions
+    u_vel=u_vel_boundaries(u_vel,n_x,n_y);
+    %correction of velocity in Y
+
+    %again x boundary conditions
+    v_vel_boundaries(v_vel,n_x,n_y)
+
+   
 
     %Eddy viscosity
     for i=2:n_y-2
@@ -373,10 +393,14 @@ iter=0;%iterations
 
             end
     end
-
+    
+    %Continuity equation residual error
+    %nu_tilde residual error
+    %iterations =iterations +1;
+    %
 
     %{
-    %calculating err
+    
 end
    %}
 
