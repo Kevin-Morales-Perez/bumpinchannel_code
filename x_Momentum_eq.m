@@ -84,13 +84,12 @@ dx=len_f(4);
 
 %----------coeficientes Ap -  Anb - Scd ---------
 
-Ap = []; %Coeficiente que multiplica a Up, lado izquierdo de la igualda, Salida
-Anb_uab =[]; %Producto de los coeficientes Anb y velocidades Ap
-S_dc =[]; %Terminos de difusión no ortogonal
+Ap = []; %LSE
+Anb_uab =[]; %RSE 
+S_dc =[]; %non orthogonal diffusion terms
 
 %----------Difussion terms---------
 %-----Face W -----
-%distance between nodes  
 %non ortogonal diffusion term
 s_cd_w= nu*tanp_w*0.25*(u_nw + u_n - u_sw - u_s);
 %diffusion term Gradient P_Ai

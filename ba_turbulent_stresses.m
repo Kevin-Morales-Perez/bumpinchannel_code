@@ -1,4 +1,4 @@
-function [tau_xx_val,tau_xy_val,tau_yy_val] = ba_turbulent_stresses(u_vec,v_vec,wl_op,nu_turbulent_val)
+function [tau_xx_val,tau_xy_val,tau_yy_val] = ba_turbulent_stresses(u_vec,v_vec,wl_op,nu_turbulent_val,rho)
 %Computation of Reynolds Stress tensor using Bousinessq asumption
 
 %adyacent node values for u
@@ -31,9 +31,9 @@ dv_dx=grad_v_vel(1);
 dv_dy=grad_v_vel(2);
 
 
-tau_xx_val=-2*nu_turbulent_val*du_dx;
-tau_xy_val=-nu_turbulent_val*(du_dy+dv_dx);
-tau_yy_val=-2*nu_turbulent_val*dv_dy;
+tau_xx_val=-2*rho*nu_turbulent_val*du_dx;
+tau_xy_val=-nu_turbulent_val*rho*(du_dy+dv_dx);
+tau_yy_val=-2*nu_turbulent_val*rho*dv_dy;
 
 
 end

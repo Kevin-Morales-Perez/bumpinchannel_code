@@ -2,7 +2,7 @@
 % NASA Turbulence modelling resource verification case
 %Written by Kevin Morales 
 %Instituto Politécnico Nacional , Aeronautical Engineering
-%clear all
+clear all
 close all 
 clc
 tic
@@ -81,12 +81,12 @@ clear k;
 
 
 %________________________Flow conditions________________________
-vel_inlet=27;  %Velocity at the inlet (m/s)
+vel_inlet=0.001;  %Velocity at the inlet (m/s)
 rho =1.2; %Density (Kg/m3)
 mu =0.0000174; %Molecular dynamic Viscosity (Kg/(m*s))
 nu=mu/rho; %Moleculae kinematic Viscosity
-reynolds_numb = vel_ini*rho*l_y/mu;%Reynolds number 
-flux_mass=l_y*vel_ini;%mass flux
+reynolds_numb = vel_inlet*rho*l_y/mu;%Reynolds number 
+flux_mass=l_y*vel_inlet;%mass flux
 fprintf("Reynolds Number ")
 disp(reynolds_numb)
 
@@ -203,7 +203,7 @@ iter=0;%iterations
     end
     
    %x boundary conditions
-   u_vel=u_vel_boundaries(u_vel,n_x,n_y);
+   u_vel=u_vel_boundaries(u_vel,n_x,n_y,vel_inlet);
 
     %Y momentum
     for i=2:n_y-2
@@ -294,18 +294,16 @@ iter=0;%iterations
     end
 
     p_press=p_press + alpha_p*alpha_p;% Pressure correction
-    p_pressure=p_press_boundaries(p_press,n_x,n_y);
+    p_press=p_press_boundaries(p_press,n_x,n_y);
 
     %correction of velocity in X
     %again x boundary conditions
-    u_vel=u_vel_boundaries(u_vel,n_x,n_y);
+    u_vel=u_vel_boundaries(u_vel,n_x,n_y,vel_inlet);
     %correction of velocity in Y
 
-    %again x boundary conditions
-    v_vel_boundaries(v_vel,n_x,n_y)
-
-   
-
+    %again v boundary conditions
+    v_vel=v_vel_boundaries(v_vel,n_x,n_y);
+    
     %Eddy viscosity
     for i=2:n_y-2
         for j=2:n_x-2
@@ -362,6 +360,9 @@ iter=0;%iterations
             nu_turbulent(i,j)=fv1*nu_tilde(i,j);
         end
     end
+    
+    %nu_tilde boundary conditions
+    nu_tilde= nu_tilde_boundary_conditions(nu_tilde,n_x,n_y);
 
     %Computing Reynolds Stresses using Boussinesq assumption
     for i=2:n_y-2
@@ -389,10 +390,13 @@ iter=0;%iterations
                 %turbulent viscosity
                 nu_turbulent_val=nu_turbulent(i,j);
                 
-                [tau_xx(i,j),tau_xy(i,j),tau_yy(i,j)]=ba_turbulent_stresses(u_vec,v_vec,wl_op,nu_turbulent_val);
+                [tau_xx(i,j),tau_xy(i,j),tau_yy(i,j)]=ba_turbulent_stresses(u_vec,v_vec,wl_op,nu_turbulent_val,rho);
 
             end
     end
+
+    %Boundary conditions for Reynolds Stresses
+    [tau_xx,tau_xy,tau_yy] = turbulent_stressses_boundaryc(tau_xx,tau_xy,tau_yy,n_x,n_y);
     
     %Continuity equation residual error
     %nu_tilde residual error
